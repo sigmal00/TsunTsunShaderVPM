@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System.IO;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
@@ -48,9 +49,21 @@ namespace Sigmal00.TsunTsunShader.Editor
         /// </summary>
         private MaterialProperty _fingerLittleLength;
 
+        private bool shouldLoadLanguage;
+
         private static bool isShowCustomProperties;
+        private static string prevLanguageName;
+        private static GUIContent tsunTsunMaskLabel;
         private static readonly Dictionary<string, MaterialProperty> copySourcePropertyDict = new Dictionary<string, MaterialProperty>();
         private const string shaderName = "Sigmal00/TsunTsunShader";
+        private const string helpUrl = "https://github.com/sigmal00/TsunTsunShaderVPM";
+
+        public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] props)
+        {
+            // 言語ファイルの読み込みは、別シェーダーから切り替わった時か言語設定が変わった時だけ行う
+            shouldLoadLanguage = lts?.name != shaderName + "/lilToon" || prevLanguageName != lilLanguageManager.langSet.languageName;
+            base.OnGUI(materialEditor, props);
+        }
 
         protected override void LoadCustomProperties(MaterialProperty[] props, Material material)
         {
@@ -63,8 +76,13 @@ namespace Sigmal00.TsunTsunShader.Editor
             // If not, set isShowRenderMode to false
             //isShowRenderMode = false;
 
-            // lang_custom.tsv の GUID（パッケージ移動時に振り直された値）
-            LoadCustomLanguage("0b2d3049fe6b2c34ea095b9729bb6912");
+            if (shouldLoadLanguage || tsunTsunMaskLabel == null)
+            {
+                // lang_custom.tsv の GUID（パッケージ移動時に振り直された値）
+                LoadCustomLanguage("0b2d3049fe6b2c34ea095b9729bb6912");
+                tsunTsunMaskLabel = new GUIContent(GetLoc("sTsunTsunMask"));
+                prevLanguageName = lilLanguageManager.langSet.languageName;
+            }
             propertyList.Clear();
             propertyList.Add(_occlusionColor = FindProperty("_OcclusionColor", props));
             propertyList.Add(_effectiveRadius = FindProperty("_EffectiveRadius", props));
@@ -96,20 +114,20 @@ namespace Sigmal00.TsunTsunShader.Editor
             }
 
             isShowCustomProperties = Foldout(GetLoc("sTsunTsunSettings"), GetLoc("sTsunTsunSettings"), isShowCustomProperties);
-            DrawMenuButton(allPropertyList);
+            DrawMenuButton(allPropertyList, helpUrl);
             if(isShowCustomProperties)
             {
                 if (ShouldDrawBlock(propertyList))
                 {
                     EditorGUILayout.BeginVertical(boxOuter);
                     EditorGUILayout.LabelField(GetLoc("sTsunTsunSettings"), customToggleFont);
-                    DrawMenuButton(propertyList);
+                    DrawMenuButton(propertyList, helpUrl);
                     EditorGUILayout.BeginVertical(boxInnerHalf);
 
                     lilEditorGUI.LocalizedProperty(m_MaterialEditor, _occlusionColor);
                     lilEditorGUI.LocalizedProperty(m_MaterialEditor, _effectiveRadius);
                     lilEditorGUI.LocalizedProperty(m_MaterialEditor, _effectiveDepth);
-                    m_MaterialEditor.TexturePropertySingleLine(new GUIContent(GetLoc("sTsunTsunMask")), _tsunTsunMask);
+                    lilEditorGUI.TexturePropertySingleLine(m_MaterialEditor, tsunTsunMaskLabel, _tsunTsunMask);
                     lilEditorGUI.LocalizedProperty(m_MaterialEditor, _fingerLengthScale);
                     lilEditorGUI.LocalizedProperty(m_MaterialEditor, _fingerIndexLength);
                     lilEditorGUI.LocalizedProperty(m_MaterialEditor, _fingerMiddleLength);
@@ -188,17 +206,87 @@ namespace Sigmal00.TsunTsunShader.Editor
         }
 
         // You can create a menu like this
-        [MenuItem("Assets/TsunTsunShader/Convert material to custom shader", false, 1100)]
+        [MenuItem("Assets/TsunTsunShader/Convert material to TsunTsunShader", false, 1100)]
         private static void ConvertMaterialToCustomShaderMenu()
         {
             if(Selection.objects.Length == 0) return;
             TsunTsunInspector inspector = new TsunTsunInspector();
             for(int i = 0; i < Selection.objects.Length; i++)
             {
-                if(Selection.objects[i] is Material)
+                Material material = Selection.objects[i] as Material;
+                if(material == null)
                 {
-                    inspector.ConvertMaterialToCustomShader((Material)Selection.objects[i]);
+                    continue;
                 }
+
+#if UNITY_2022_1_OR_NEWER
+                if(material.parent != null)
+                {
+                    Debug.LogWarningFormat("Ignore Material Variant: {0}", AssetDatabase.GetAssetPath(material));
+                    continue;
+                }
+#endif  // UNITY_2022_1_OR_NEWER
+
+                Undo.RecordObject(material, "Assign customized lilToon shader (MenuItem: \"Assets/TsunTsunShader/Convert material to TsunTsunShader\")");
+
+                // シェーダー変換で消えてしまう VRCFallback タグを退避して戻す
+                string tagval = material.GetTag("VRCFallback", false);
+
+                inspector.ConvertMaterialToCustomShader(material);
+
+                if(tagval.Length != 0)
+                {
+                    AssetDatabase.SaveAssetIfDirty(material);
+                    material.SetOverrideTag("VRCFallback", tagval);
+                }
+            }
+        }
+
+        [MenuItem("Assets/TsunTsunShader/Copy && Convert material to TsunTsunShader", false, 1101)]
+        private static void CopyAndConvertMaterialToCustomShaderMenu()
+        {
+            if(Selection.objects.Length == 0) return;
+            TsunTsunInspector inspector = new TsunTsunInspector();
+            for(int i = 0; i < Selection.objects.Length; i++)
+            {
+                Material originalMaterial = Selection.objects[i] as Material;
+                if(originalMaterial == null)
+                {
+                    continue;
+                }
+
+#if UNITY_2022_1_OR_NEWER
+                if(originalMaterial.parent != null)
+                {
+                    Debug.LogWarningFormat("Ignore Material Variant: {0}", AssetDatabase.GetAssetPath(originalMaterial));
+                    continue;
+                }
+#endif  // UNITY_2022_1_OR_NEWER
+
+                Material copiedMaterial = new Material(originalMaterial);
+                inspector.ConvertMaterialToCustomShader(copiedMaterial);
+                string path = AssetDatabase.GetAssetPath(originalMaterial);
+                string newPath = Path.GetDirectoryName(path) + "/" + Path.GetFileNameWithoutExtension(path) + "_TsunTsun" + Path.GetExtension(path);
+
+                if(File.Exists(newPath))
+                {
+                    string basePart = Path.GetDirectoryName(newPath) + "/" + Path.GetFileNameWithoutExtension(newPath);
+                    if(EditorSettings.assetNamingUsesSpace)
+                    {
+                        basePart += " ";
+                    }
+                    string extension = Path.GetExtension(newPath);
+                    int counter = 1;
+
+                    do
+                    {
+                        newPath = basePart + counter + extension;
+                        counter++;
+                    }
+                    while (File.Exists(newPath));
+                }
+
+                AssetDatabase.CreateAsset(copiedMaterial, newPath);
             }
         }
 
@@ -275,6 +363,7 @@ namespace Sigmal00.TsunTsunShader.Editor
                         if (shouldCopyTex)
                         {
                             prop.textureValue = sourceProp.textureValue;
+                            prop.textureScaleAndOffset = sourceProp.textureScaleAndOffset;
                         }
                         break;
                     case MaterialProperty.PropType.Int:
@@ -322,6 +411,7 @@ namespace Sigmal00.TsunTsunShader.Editor
                         break;
                     case MaterialProperty.PropType.Texture:
                         prop.textureValue = null;
+                        prop.textureScaleAndOffset = new Vector4(1.0f, 1.0f, 0.0f, 0.0f);
                         break;
                     case MaterialProperty.PropType.Int:
                         prop.intValue = shader.GetPropertyDefaultIntValue(propID);
