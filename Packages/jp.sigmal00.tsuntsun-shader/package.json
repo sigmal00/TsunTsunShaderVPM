@@ -1,0 +1,22 @@
+{
+  "name": "jp.sigmal00.tsuntsun-shader",
+  "displayName": "TsunTsunShader",
+  "version": "0.9.0",
+  "description": "\u307b\u3063\u307a\u305f\u3064\u3093\u3064\u3093\u3059\u308b\u30b7\u30a7\u30fc\u30c0\u30fc",
+  "gitDependencies": {},
+  "vpmDependencies": {
+    "jp.lilxyzw.liltoon": ">=2.4.1",
+    "com.vrchat.base": ">=3.10.6"
+  },
+  "author": {
+    "name": "sigmal00",
+    "url": "https://github.com/sigmal00"
+  },
+  "legacyFolders": {},
+  "legacyFiles": {},
+  "unity": "2022.3",
+  "license": "MIT",
+  "dependencies": {
+    "jp.lilxyzw.liltoon": "2.4.1"
+  }
+}

@@ -1,0 +1,13 @@
+Language	English	Japanese	Korean	Chinese Simplified	Chinese Traditional
+sCustomShaderTitle	TsunTsun Shader	TsunTsun Shader	TsunTsun Shader	TsunTsun Shader	TsunTsun Shader
+sCustomPropertyCategory	TsunTsun Shader	TsunTsun Shader	TsunTsun Shader	TsunTsun Shader	TsunTsun Shader
+sTsunTsunSettings	TsunTsun Settings	つんつん設定	츤츤 설정	戳戳设置	戳戳設定
+sOcclusionColor	Poked Area Color	つんつんした場所の色	찌른 부분의 색	被戳部位的颜色	被戳部位的顏色
+sEffectiveRadius	Dent Radius (m)	へこむ範囲 (m)	움푹 들어가는 범위 (m)	凹陷范围 (m)	凹陷範圍 (m)
+sEffectiveDepth	Dent Depth (m)	へこむ深さ (m)	움푹 들어가는 깊이 (m)	凹陷深度 (m)	凹陷深度 (m)
+sTsunTsunMask	TsunTsun Mask (White: dents / Black: no dent)	つんつんマスク (白: へこむ / 黒: へこまない)	츤츤 마스크 (흰색: 들어감 / 검은색: 안 들어감)	戳戳遮罩 (白: 凹陷 / 黑: 不凹陷)	戳戳遮罩 (白: 凹陷 / 黑: 不凹陷)
+sFingerLengthScale	Finger Length Scale	指の全体スケール	손가락 전체 스케일	手指整体缩放	手指整體縮放
+sFingerIndexLength	Index Finger Length (m)	人差し指の長さ (m)	검지 길이 (m)	食指长度 (m)	食指長度 (m)
+sFingerMiddleLength	Middle Finger Length (m)	中指の長さ (m)	중지 길이 (m)	中指长度 (m)	中指長度 (m)
+sFingerRingLength	Ring Finger Length (m)	薬指の長さ (m)	약지 길이 (m)	无名指长度 (m)	無名指長度 (m)
+sFingerLittleLength	Little Finger Length (m)	小指の長さ (m)	새끼손가락 길이 (m)	小指长度 (m)	小指長度 (m)
