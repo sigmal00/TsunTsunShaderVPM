@@ -6,7 +6,8 @@
   "gitDependencies": {},
   "vpmDependencies": {
     "jp.lilxyzw.liltoon": ">=2.4.1",
-    "com.vrchat.base": ">=3.10.6"
+    "com.vrchat.base": ">=3.10.6",
+    "nadena.dev.ndmf": ">=1.14.8"
   },
   "author": {
     "name": "sigmal00",

@@ -188,7 +188,7 @@ namespace Sigmal00.TsunTsunShader.Editor
         }
 
         // You can create a menu like this
-        [MenuItem("Assets/Sigmal00/TsunTsunShader/Convert material to custom shader", false, 1100)]
+        [MenuItem("Assets/TsunTsunShader/Convert material to custom shader", false, 1100)]
         private static void ConvertMaterialToCustomShaderMenu()
         {
             if(Selection.objects.Length == 0) return;

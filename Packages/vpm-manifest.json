@@ -5,6 +5,12 @@
     },
     "jp.lilxyzw.liltoon": {
       "version": "2.4.1"
+    },
+    "lyuma.av3emulator": {
+      "version": "3.4.13"
+    },
+    "nadena.dev.ndmf": {
+      "version": "1.15.0"
     }
   },
   "locked": {
@@ -20,6 +26,16 @@
     },
     "jp.lilxyzw.liltoon": {
       "version": "2.4.1",
+      "dependencies": {}
+    },
+    "lyuma.av3emulator": {
+      "version": "3.4.13",
+      "dependencies": {
+        "com.vrchat.avatars": "^3.1.0"
+      }
+    },
+    "nadena.dev.ndmf": {
+      "version": "1.15.0",
       "dependencies": {}
     }
   }

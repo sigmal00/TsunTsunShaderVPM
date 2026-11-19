@@ -1,0 +1,19 @@
+{
+    "name": "Sigmal00.TsunTsunShader.Editor.NDMF",
+    "rootNamespace": "",
+    "references": [
+        "nadena.dev.ndmf",
+        "Sigmal00.TsunTsunShader.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
