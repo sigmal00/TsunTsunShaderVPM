@@ -47,7 +47,7 @@ namespace Sigmal00.TsunTsunShader
             var lossy = root.lossyScale;
             var scale = Mathf.Max(Mathf.Abs(lossy.x), Mathf.Abs(lossy.y), Mathf.Abs(lossy.z));
 
-            Gizmos.color = new Color(1.0f, 0.5f, 0.7f, 1.0f);
+            Gizmos.color = Color.cyan;
             switch (shapeType)
             {
                 case ContactBase.ShapeType.Sphere:
