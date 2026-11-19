@@ -124,6 +124,14 @@ namespace Sigmal00.TsunTsunShader.Editor
                     DrawMenuButton(propertyList, helpUrl);
                     EditorGUILayout.BeginVertical(boxInnerHalf);
 
+                    // TsunTsunReceiver とセットで動くことの案内とマニュアルへのリンク
+                    EditorGUILayout.HelpBox(GetLoc("sTsunTsunReceiverRequired"), MessageType.Info);
+                    if (GUILayout.Button(GetLoc("sOpenManual")))
+                    {
+                        OpenHelpPage(helpUrl);
+                    }
+                    EditorGUILayout.Space();
+
                     lilEditorGUI.LocalizedProperty(m_MaterialEditor, _occlusionColor);
                     lilEditorGUI.LocalizedProperty(m_MaterialEditor, _effectiveRadius);
                     lilEditorGUI.LocalizedProperty(m_MaterialEditor, _effectiveDepth);
@@ -133,6 +141,7 @@ namespace Sigmal00.TsunTsunShader.Editor
                     lilEditorGUI.LocalizedProperty(m_MaterialEditor, _fingerMiddleLength);
                     lilEditorGUI.LocalizedProperty(m_MaterialEditor, _fingerRingLength);
                     lilEditorGUI.LocalizedProperty(m_MaterialEditor, _fingerLittleLength);
+                    EditorGUILayout.HelpBox(GetLoc("sFingerLengthHelp"), MessageType.Info);
 
                     EditorGUILayout.EndVertical();
                 }

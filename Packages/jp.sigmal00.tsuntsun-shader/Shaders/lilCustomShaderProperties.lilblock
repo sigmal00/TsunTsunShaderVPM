@@ -5,7 +5,7 @@
         _EffectiveDepth ("sEffectiveDepth", Float) = 0.01
         _TsunTsunMask ("sTsunTsunMask", 2D) = "white" {}
         _FingerLengthScale ("sFingerLengthScale", Range(0, 2)) = 1
-        _FingerIndexLength ("sFingerIndexLength", Range(0, 0.1)) = 0.05
-        _FingerMiddleLength ("sFingerMiddleLength", Range(0, 0.1)) = 0.05
-        _FingerRingLength ("sFingerRingLength", Range(0, 0.1)) = 0.05
-        _FingerLittleLength ("sFingerLittleLength", Range(0, 0.1)) = 0.05
+        _FingerIndexLength ("sFingerIndexLength", Range(0, 0.1)) = 0.025
+        _FingerMiddleLength ("sFingerMiddleLength", Range(0, 0.1)) = 0.025
+        _FingerRingLength ("sFingerRingLength", Range(0, 0.1)) = 0.025
+        _FingerLittleLength ("sFingerLittleLength", Range(0, 0.1)) = 0.025

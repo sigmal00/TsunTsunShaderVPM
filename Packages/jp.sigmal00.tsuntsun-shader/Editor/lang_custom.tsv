@@ -11,3 +11,5 @@ sFingerIndexLength	Index Finger Length (m)	人差し指の長さ (m)	검지 길�
 sFingerMiddleLength	Middle Finger Length (m)	中指の長さ (m)	중지 길이 (m)	中指长度 (m)	中指長度 (m)
 sFingerRingLength	Ring Finger Length (m)	薬指の長さ (m)	약지 길이 (m)	无名指长度 (m)	無名指長度 (m)
 sFingerLittleLength	Little Finger Length (m)	小指の長さ (m)	새끼손가락 길이 (m)	小指长度 (m)	小指長度 (m)
+sTsunTsunReceiverRequired	This shader works together with the TsunTsun Receiver component. See the manual for setup instructions.	このシェーダーはTsunTsun Receiverコンポーネントとセットで動作します。セットアップ手順はマニュアルを参照してください。	이 셰이더는 TsunTsun Receiver 컴포넌트와 함께 작동합니다. 설정 방법은 매뉴얼을 참조하세요.	此着色器需要与 TsunTsun Receiver 组件配合使用。设置步骤请参阅手册。	此著色器需要與 TsunTsun Receiver 元件搭配使用。設定步驟請參閱手冊。
+sFingerLengthHelp	Set the length from the fingertip to the second joint. About 2.5 cm.	指の先端から第二関節までの長さを設定します。大体2.5cmくらいです。	손가락 끝에서 두 번째 관절까지의 길이를 설정합니다. 대략 2.5cm 정도입니다.	设置从指尖到第二关节的长度。大约 2.5cm。	設定從指尖到第二關節的長度。大約 2.5cm。
