@@ -19,11 +19,11 @@ namespace Sigmal00.TsunTsunShader
         [Header("Shape")]
         public ContactBase.ShapeType shapeType = ContactBase.ShapeType.Sphere;
         [Tooltip("Sphere / Capsule の半径 (m)")]
-        public float radius = 0.1f;
+        public float radius = 0.5f;
         [Tooltip("Capsule の高さ (m)。両端の半球を含む全体の長さです。")]
-        public float height = 0.2f;
+        public float height = 2.0f;
         [Tooltip("Box の大きさ (m)")]
-        public Vector3 size = new Vector3(0.1f, 0.1f, 0.1f);
+        public Vector3 size = new Vector3(1.0f, 1.0f, 1.0f);
         [Tooltip("Root Transform からの位置オフセット")]
         public Vector3 position = Vector3.zero;
         [Tooltip("Root Transform からの回転オフセット（オイラー角）")]

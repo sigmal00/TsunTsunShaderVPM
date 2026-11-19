@@ -11,6 +11,9 @@
     },
     "nadena.dev.ndmf": {
       "version": "1.15.0"
+    },
+    "com.anatawa12.avatar-optimizer": {
+      "version": "1.9.23"
     }
   },
   "locked": {
@@ -37,6 +40,13 @@
     "nadena.dev.ndmf": {
       "version": "1.15.0",
       "dependencies": {}
+    },
+    "com.anatawa12.avatar-optimizer": {
+      "version": "1.9.23",
+      "dependencies": {
+        "com.vrchat.avatars": ">=3.7.0 <3.11.0",
+        "nadena.dev.ndmf": ">=1.8.0 <2.0.0"
+      }
     }
   }
 }
