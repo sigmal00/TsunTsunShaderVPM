@@ -6,6 +6,15 @@ static float3 g_orgPosition = float3(0,0,0);
 static float3 g_orgNormal = float3(0,0,1);
 static float g_depth = 0;
 
+// ファーのパスで LIL_CUSTOM_VERT_COPY の書き込み先にするダミー（custom.hlsl の LIL_V2F_OUT_BASE 参照）
+struct TsunDummyVertCopy
+{
+    float3 orgPosition;
+    float3 orgNormal;
+    float depth;
+};
+static TsunDummyVertCopy g_tsunDummyVertCopy;
+
 struct DeformationData
 {
     float3 position;

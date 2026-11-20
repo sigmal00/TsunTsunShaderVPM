@@ -57,6 +57,10 @@
 #endif
 
 // Add vertex copy
+// ファーのパス（lil_common_vert_fur.hlsl）では LIL_V2F_OUT_BASE が定義されず、出力も v2g なので、
+// 書き込み先をダミーにして何もしないようにする。
+// 通常のパスでは lil_common_vert.hlsl が #undef してから定義し直すので、こちらの定義は影響しない。
+#define LIL_V2F_OUT_BASE g_tsunDummyVertCopy
 // LIL_CUSTOM_VERTEX_OS で static 変数に書いた色を v2f に詰める（VERTEX_OS の後に実行される）
 // 1パスアウトラインでは v2f が output.base になるので LIL_V2F_OUT_BASE を使う
 #define LIL_CUSTOM_VERT_COPY \
