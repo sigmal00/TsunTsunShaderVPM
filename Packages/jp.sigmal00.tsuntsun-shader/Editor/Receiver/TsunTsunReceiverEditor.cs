@@ -32,7 +32,7 @@ namespace Sigmal00.TsunTsunShader.Editor
         private const int MaxTargetRenderers = 4;
         private const string MaskFoldoutKey = "Sigmal00.TsunTsunShader.TsunTsunReceiverEditor.MaskFoldout";
 
-        private static readonly GUIContent MaskFoldoutLabel = new GUIContent("マスク生成", "Receiver の範囲からつんつんマスクを生成してマテリアルに割り当てます。");
+        private static readonly GUIContent MaskFoldoutLabel = new GUIContent("つんつんマスク生成", "Receiverが覆っている範囲をもとにマスクを生成してマテリアルに割り当てます。");
         private static readonly GUIContent MaskOutputFolderLabel = new GUIContent("保存先", "生成したマスクの保存先フォルダ（Assets/ 以下）。空ならマテリアルと同じフォルダに保存します。");
         private static readonly GUIContent MaskResolutionLabel = new GUIContent("解像度", "生成するマスクの解像度");
         private static readonly GUIContent MaskFadeWidthLabel = new GUIContent("フェード幅 (m)", "範囲の端でマスクを白から黒へフェードさせる幅");
@@ -132,6 +132,9 @@ namespace Sigmal00.TsunTsunShader.Editor
             serializedObject.Update();
             using (new EditorGUI.IndentLevelScope())
             {
+                EditorGUILayout.HelpBox("Receiverが覆っている範囲をもとにマスクテクスチャを生成してマテリアルに割り当てます。", MessageType.Info);
+                EditorGUILayout.Space();
+
                 DrawFolderField(_maskOutputFolder, MaskOutputFolderLabel);
                 EditorGUILayout.IntPopup(_maskResolution, ResolutionLabels, TsunTsunMaskGenerator.Resolutions, MaskResolutionLabel);
                 EditorGUILayout.PropertyField(_maskFadeWidth, MaskFadeWidthLabel);
@@ -146,7 +149,7 @@ namespace Sigmal00.TsunTsunShader.Editor
             // 生成は 1 つずつ（複数選択中は押せない）
             using (new EditorGUI.DisabledScope(serializedObject.isEditingMultipleObjects))
             {
-                if (GUILayout.Button("マスクを生成"))
+                if (GUILayout.Button("マスクを生成してマテリアルに設定する"))
                 {
                     TsunTsunMaskGenerator.Generate((TsunTsunReceiver)target);
                 }
