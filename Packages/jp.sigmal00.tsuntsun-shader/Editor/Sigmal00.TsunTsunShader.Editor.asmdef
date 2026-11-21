@@ -2,7 +2,8 @@
     "name": "Sigmal00.TsunTsunShader.Editor",
     "rootNamespace": "",
     "references": [
-        "lilToon.Editor"
+        "lilToon.Editor",
+        "Sigmal00.TsunTsunShader.Runtime"
     ],
     "includePlatforms": [
         "Editor"

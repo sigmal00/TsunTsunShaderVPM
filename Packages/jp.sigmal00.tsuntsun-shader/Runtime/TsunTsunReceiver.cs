@@ -38,6 +38,17 @@ namespace Sigmal00.TsunTsunShader
         [Tooltip("TsunTsunShader のマテリアルを使っているレンダラー（最大 4 つ）")]
         public Renderer[] targetRenderers = new Renderer[0];
 
+        // ---- マスク生成（エディタ専用。インスペクターの「マスクを生成」で使う） ----
+
+        [Tooltip("生成したマスクの保存先フォルダ（Assets/ 以下）。空ならマテリアルと同じフォルダに保存します。")]
+        public string maskOutputFolder = "";
+        [Tooltip("生成するマスクの解像度")]
+        public int maskResolution = 512;
+        [Tooltip("範囲の端でマスクを白から黒へフェードさせる幅 (m)")]
+        public float maskFadeWidth = 0.02f;
+        [Tooltip("手・指のボーンにウェイトが乗っている部分をマスクから除外する")]
+        public bool maskExcludeHands = true;
+
         private void OnDrawGizmosSelected()
         {
             // 生成される ContactReceiver の範囲をおおまかに表示する

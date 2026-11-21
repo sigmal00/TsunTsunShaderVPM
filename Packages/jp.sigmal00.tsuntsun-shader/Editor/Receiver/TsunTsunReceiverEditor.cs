@@ -22,10 +22,21 @@ namespace Sigmal00.TsunTsunShader.Editor
         private SerializedProperty _allowOthers;
         private SerializedProperty _localOnly;
         private SerializedProperty _targetRenderers;
+        private SerializedProperty _maskOutputFolder;
+        private SerializedProperty _maskResolution;
+        private SerializedProperty _maskFadeWidth;
+        private SerializedProperty _maskExcludeHands;
 
         private const string ReadmeUrl = "https://github.com/sigmal00/TsunTsunShaderVPM#readme";
         private const string TsunTsunShaderName = "Sigmal00/TsunTsunShader";
         private const int MaxTargetRenderers = 4;
+        private const string MaskFoldoutKey = "Sigmal00.TsunTsunShader.TsunTsunReceiverEditor.MaskFoldout";
+
+        private static readonly GUIContent MaskFoldoutLabel = new GUIContent("マスク生成", "Receiver の範囲からつんつんマスクを生成してマテリアルに割り当てます。");
+        private static readonly GUIContent MaskOutputFolderLabel = new GUIContent("保存先", "生成したマスクの保存先フォルダ（Assets/ 以下）。空ならマテリアルと同じフォルダに保存します。");
+        private static readonly GUIContent MaskResolutionLabel = new GUIContent("解像度", "生成するマスクの解像度");
+        private static readonly GUIContent MaskFadeWidthLabel = new GUIContent("フェード幅 (m)", "範囲の端でマスクを白から黒へフェードさせる幅");
+        private static readonly GUIContent MaskExcludeHandsLabel = new GUIContent("手を除外", "手・指のボーンにウェイトが乗っている部分をマスクから除外します");
 
         private void OnEnable()
         {
@@ -40,6 +51,10 @@ namespace Sigmal00.TsunTsunShader.Editor
             _allowOthers     = serializedObject.FindProperty(nameof(TsunTsunReceiver.allowOthers));
             _localOnly       = serializedObject.FindProperty(nameof(TsunTsunReceiver.localOnly));
             _targetRenderers = serializedObject.FindProperty(nameof(TsunTsunReceiver.targetRenderers));
+            _maskOutputFolder = serializedObject.FindProperty(nameof(TsunTsunReceiver.maskOutputFolder));
+            _maskResolution   = serializedObject.FindProperty(nameof(TsunTsunReceiver.maskResolution));
+            _maskFadeWidth    = serializedObject.FindProperty(nameof(TsunTsunReceiver.maskFadeWidth));
+            _maskExcludeHands = serializedObject.FindProperty(nameof(TsunTsunReceiver.maskExcludeHands));
         }
 
         public override void OnInspectorGUI()
@@ -93,6 +108,107 @@ namespace Sigmal00.TsunTsunShader.Editor
             {
                 DrawRendererValidation((TsunTsunReceiver)target);
             }
+
+            EditorGUILayout.Space();
+            DrawMaskGeneration();
+        }
+
+        /// <summary>
+        /// マスク生成のオプションと「マスクを生成」ボタン。
+        /// </summary>
+        private void DrawMaskGeneration()
+        {
+            var foldout = SessionState.GetBool(MaskFoldoutKey, false);
+            var newFoldout = EditorGUILayout.Foldout(foldout, MaskFoldoutLabel, true);
+            if (newFoldout != foldout)
+            {
+                SessionState.SetBool(MaskFoldoutKey, newFoldout);
+            }
+            if (!newFoldout)
+            {
+                return;
+            }
+
+            serializedObject.Update();
+            using (new EditorGUI.IndentLevelScope())
+            {
+                DrawFolderField(_maskOutputFolder, MaskOutputFolderLabel);
+                EditorGUILayout.IntPopup(_maskResolution, ResolutionLabels, TsunTsunMaskGenerator.Resolutions, MaskResolutionLabel);
+                EditorGUILayout.PropertyField(_maskFadeWidth, MaskFadeWidthLabel);
+                if (_maskFadeWidth.floatValue < 0.0f)
+                {
+                    _maskFadeWidth.floatValue = 0.0f;
+                }
+                EditorGUILayout.PropertyField(_maskExcludeHands, MaskExcludeHandsLabel);
+            }
+            serializedObject.ApplyModifiedProperties();
+
+            // 生成は 1 つずつ（複数選択中は押せない）
+            using (new EditorGUI.DisabledScope(serializedObject.isEditingMultipleObjects))
+            {
+                if (GUILayout.Button("マスクを生成"))
+                {
+                    TsunTsunMaskGenerator.Generate((TsunTsunReceiver)target);
+                }
+            }
+        }
+
+        private static readonly GUIContent[] ResolutionLabels = System.Array.ConvertAll(
+            TsunTsunMaskGenerator.Resolutions, r => new GUIContent($"{r} x {r}"));
+
+        /// <summary>
+        /// Assets/ 以下のフォルダパスを入力する欄（テキスト ＋ 選択ボタン）。
+        /// </summary>
+        private static void DrawFolderField(SerializedProperty property, GUIContent label)
+        {
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.PropertyField(property, label);
+                if (GUILayout.Button("...", GUILayout.Width(28)))
+                {
+                    var current = string.IsNullOrEmpty(property.stringValue) ? "Assets" : property.stringValue;
+                    var selected = EditorUtility.OpenFolderPanel("マスクの保存先", current, "");
+                    if (!string.IsNullOrEmpty(selected))
+                    {
+                        var relative = ToAssetPath(selected);
+                        if (relative != null)
+                        {
+                            property.stringValue = relative;
+                        }
+                        else
+                        {
+                            EditorUtility.DisplayDialog("TsunTsunShader", "プロジェクトの Assets フォルダ以下を選んでください。", "OK");
+                        }
+                    }
+                    // OpenFolderPanel の後はレイアウトが崩れるのでここで抜ける
+                    property.serializedObject.ApplyModifiedProperties();
+                    GUIUtility.ExitGUI();
+                }
+            }
+
+            var path = property.stringValue;
+            if (!string.IsNullOrEmpty(path) && !AssetDatabase.IsValidFolder(path))
+            {
+                EditorGUILayout.HelpBox($"保存先フォルダ {path} が見つかりません。", MessageType.Warning);
+            }
+        }
+
+        /// <summary>
+        /// 絶対パスを Assets/ から始まるパスに変換する。プロジェクトの Assets 以下でなければ null。
+        /// </summary>
+        private static string ToAssetPath(string absolutePath)
+        {
+            var dataPath = Application.dataPath.Replace('\\', '/');
+            var path = absolutePath.Replace('\\', '/');
+            if (path == dataPath)
+            {
+                return "Assets";
+            }
+            if (path.StartsWith(dataPath + "/"))
+            {
+                return "Assets" + path.Substring(dataPath.Length);
+            }
+            return null;
         }
 
         /// <summary>
