@@ -46,49 +46,17 @@ namespace Sigmal00.TsunTsunShader
         public int maskResolution = 512;
         [Tooltip("範囲の端でマスクを白から黒へフェードさせる幅 (m)")]
         public float maskFadeWidth = 0.02f;
+        [Tooltip("範囲の内側でのマスクの強さ（0〜1）")]
+        [Range(0.0f, 1.0f)]
+        public float maskMaxValue = 1.0f;
         [Tooltip("手・指のボーンにウェイトが乗っている部分をマスクから除外する")]
         public bool maskExcludeHands = true;
 
         private void OnDrawGizmosSelected()
         {
             // 生成される ContactReceiver の範囲をおおまかに表示する
-            var root = rootTransform != null ? rootTransform : transform;
-            var center = root.TransformPoint(position);
-            var rot = root.rotation * Quaternion.Euler(rotation);
-            var lossy = root.lossyScale;
-            var scale = Mathf.Max(Mathf.Abs(lossy.x), Mathf.Abs(lossy.y), Mathf.Abs(lossy.z));
-
-            Gizmos.color = Color.cyan;
-            switch (shapeType)
-            {
-                case ContactBase.ShapeType.Sphere:
-                    Gizmos.DrawWireSphere(center, radius * scale);
-                    break;
-
-                case ContactBase.ShapeType.Capsule:
-                {
-                    var r = radius * scale;
-                    var half = Mathf.Max(height * scale * 0.5f - r, 0.0f);
-                    var axis = rot * Vector3.up;
-                    var a = center + axis * half;
-                    var b = center - axis * half;
-                    Gizmos.DrawWireSphere(a, r);
-                    Gizmos.DrawWireSphere(b, r);
-                    var side1 = rot * Vector3.right * r;
-                    var side2 = rot * Vector3.forward * r;
-                    Gizmos.DrawLine(a + side1, b + side1);
-                    Gizmos.DrawLine(a - side1, b - side1);
-                    Gizmos.DrawLine(a + side2, b + side2);
-                    Gizmos.DrawLine(a - side2, b - side2);
-                    break;
-                }
-
-                case ContactBase.ShapeType.Box:
-                    Gizmos.matrix = Matrix4x4.TRS(center, rot, lossy);
-                    Gizmos.DrawWireCube(Vector3.zero, size);
-                    Gizmos.matrix = Matrix4x4.identity;
-                    break;
-            }
+            TsunTsunShapeGizmo.Draw(rootTransform != null ? rootTransform : transform,
+                shapeType, radius, height, size, position, rotation, Color.cyan);
         }
     }
 }

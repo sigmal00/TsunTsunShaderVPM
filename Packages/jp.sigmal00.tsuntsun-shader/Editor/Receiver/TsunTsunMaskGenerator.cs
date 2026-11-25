@@ -5,17 +5,22 @@ using System.Text;
 using UnityEditor;
 using UnityEngine;
 using VRC.Dynamics;
+using VRC.SDK3.Avatars.Components;
 
 namespace Sigmal00.TsunTsunShader.Editor
 {
     /// <summary>
-    /// TsunTsunReceiver の範囲からつんつんマスク（_TsunTsunMask）を生成して、PNG として保存・マテリアルに割り当てる。
+    /// TsunTsunReceiver の範囲と、アバター内の TsunTsunMask からつんつんマスク（_TsunTsunMask）を生成して、PNG として保存・マテリアルに割り当てる。
     /// ビルド時ではなくエディタ上でボタンから実行し、結果はユーザーのアセットとして残す。
     ///
     /// 処理の流れ
     ///  1. targetRenderers の TsunTsunShader マテリアルを集める（同じマテリアルは 1 枚のマスクにまとめる）
     ///  2. 各レンダラーのメッシュを今のポーズでワールド座標にする
-    ///  3. 頂点ごとに Receiver 範囲内かを判定し（端は maskFadeWidth でフェード）、maskExcludeHands なら手・指ボーンのウェイトぶん暗くする
+    ///  3. 頂点ごとにマスク値を決める（MaskEvaluator 参照）
+    ///     - Receiver の範囲の完全に外側は 0
+    ///     - 内側は Receiver の maskMaxValue（端は maskFadeWidth でフェード）
+    ///     - TsunTsunMask の内側はその maxValue で上書き（端は fadeWidth で混ぜる。重なったところは大きいほう）
+    ///     - 最後に maskExcludeHands なら手・指ボーンのウェイトぶん暗くする（TsunTsunMask より優先）
     ///  4. UV0 上に三角形をラスタライズし、UV 島の縁を膨張させる
     ///  5. PNG で保存し、_TsunTsunMask に割り当てる
     /// </summary>
@@ -47,7 +52,8 @@ namespace Sigmal00.TsunTsunShader.Editor
         }
 
         /// <summary>
-        /// receiver の設定（maskOutputFolder / maskResolution / maskFadeWidth / maskExcludeHands）でマスクを生成する。
+        /// receiver の設定（maskOutputFolder / maskResolution / maskFadeWidth / maskMaxValue / maskExcludeHands）と
+        /// アバター内の TsunTsunMask でマスクを生成する。
         /// </summary>
         public static void Generate(TsunTsunReceiver receiver)
         {
@@ -106,8 +112,8 @@ namespace Sigmal00.TsunTsunShader.Editor
                 }
             }
 
-            var shape = new ReceiverShape(receiver);
-            var fadeWidth = Mathf.Max(receiver.maskFadeWidth, 0.0f);
+            var masks = CollectMasks(receiver);
+            var evaluator = new MaskEvaluator(receiver, masks);
             var handBones = receiver.maskExcludeHands ? CollectHandBones(receiver, warnings) : null;
 
             var generated = new List<string>();
@@ -118,7 +124,7 @@ namespace Sigmal00.TsunTsunShader.Editor
                 {
                     var renderer = renderers[i];
                     EditorUtility.DisplayProgressBar(DialogTitle, $"マスクを描いています: {renderer.name}", (float)i / renderers.Length * 0.8f);
-                    RasterizeRenderer(renderer, canvases, shape, fadeWidth, handBones, warnings);
+                    RasterizeRenderer(renderer, canvases, evaluator, handBones, warnings);
                 }
 
                 // 膨張して保存・割り当て
@@ -148,7 +154,7 @@ namespace Sigmal00.TsunTsunShader.Editor
             }
 
             var message = generated.Count > 0
-                ? "マスクを生成して割り当てました。\n\n" + string.Join("\n", generated)
+                ? $"マスクを生成して割り当てました（TsunTsun Mask: {masks.Length} 個）。\n\n" + string.Join("\n", generated)
                 : "マスクを生成できませんでした。";
             ShowDialog(message + FormatWarnings(warnings));
         }
@@ -157,7 +163,7 @@ namespace Sigmal00.TsunTsunShader.Editor
         // ラスタライズ
 
         private static void RasterizeRenderer(Renderer renderer, Dictionary<Material, MaskCanvas> canvases,
-            ReceiverShape shape, float fadeWidth, HashSet<Transform> handBones, List<string> warnings)
+            MaskEvaluator evaluator, HashSet<Transform> handBones, List<string> warnings)
         {
             if (!TryGetWorldMesh(renderer, out var mesh, out var worldVertices))
             {
@@ -177,10 +183,7 @@ namespace Sigmal00.TsunTsunShader.Editor
             var values = new float[worldVertices.Length];
             for (var v = 0; v < worldVertices.Length; v++)
             {
-                var distance = shape.SignedDistance(worldVertices[v]);
-                values[v] = fadeWidth > 0.0f
-                    ? Mathf.Clamp01(-distance / fadeWidth)
-                    : (distance <= 0.0f ? 1.0f : 0.0f);
+                values[v] = evaluator.Evaluate(worldVertices[v]);
             }
 
             if (handBones != null)
@@ -581,10 +584,99 @@ namespace Sigmal00.TsunTsunShader.Editor
             return warnings.Count == 0 ? "" : "\n\n注意:\n" + string.Join("\n", warnings.Select(w => "・" + w));
         }
 
+        // ------------------------------------------------------------------------------------------------
+        // TsunTsunMask の収集と合成
+
         /// <summary>
-        /// Receiver の範囲（ギズモと同じ解釈）までの符号付き距離。内側が負。
+        /// receiver が属するアバター（VRCAvatarDescriptor、無ければ最上位の Transform）以下の TsunTsunMask を集める。
         /// </summary>
-        private readonly struct ReceiverShape
+        public static TsunTsunMask[] CollectMasks(TsunTsunReceiver receiver)
+        {
+            var descriptor = receiver.GetComponentInParent<VRCAvatarDescriptor>(true);
+            var root = descriptor != null ? descriptor.transform : receiver.transform.root;
+            return root.GetComponentsInChildren<TsunTsunMask>(true);
+        }
+
+        /// <summary>
+        /// ワールド座標の点のマスク値（手の除外の前）を求める。
+        /// </summary>
+        private class MaskEvaluator
+        {
+            private readonly Shape _receiverShape;
+            private readonly float _receiverFade;
+            private readonly float _receiverMax;
+            private readonly Shape[] _maskShapes;
+            private readonly float[] _maskFades;
+            private readonly float[] _maskMaxValues;
+
+            public MaskEvaluator(TsunTsunReceiver receiver, TsunTsunMask[] masks)
+            {
+                _receiverShape = new Shape(receiver.rootTransform != null ? receiver.rootTransform : receiver.transform,
+                    receiver.shapeType, receiver.radius, receiver.height, receiver.size, receiver.position, receiver.rotation);
+                _receiverFade = Mathf.Max(receiver.maskFadeWidth, 0.0f);
+                _receiverMax = Mathf.Clamp01(receiver.maskMaxValue);
+
+                _maskShapes = new Shape[masks.Length];
+                _maskFades = new float[masks.Length];
+                _maskMaxValues = new float[masks.Length];
+                for (var i = 0; i < masks.Length; i++)
+                {
+                    var m = masks[i];
+                    _maskShapes[i] = new Shape(m.rootTransform != null ? m.rootTransform : m.transform,
+                        m.shapeType, m.radius, m.height, m.size, m.position, m.rotation);
+                    _maskFades[i] = Mathf.Max(m.fadeWidth, 0.0f);
+                    _maskMaxValues[i] = Mathf.Clamp01(m.maxValue);
+                }
+            }
+
+            public float Evaluate(Vector3 p)
+            {
+                // Receiver の範囲の完全に外側は TsunTsunMask があっても黒
+                var receiverDistance = _receiverShape.SignedDistance(p);
+                if (receiverDistance > 0.0f)
+                {
+                    return 0.0f;
+                }
+                var baseValue = Insideness(receiverDistance, _receiverFade) * _receiverMax;
+
+                // TsunTsunMask の合成
+                //   coverage : どれだけ TsunTsunMask の内側にいるか（各マスクの内側度の最大）
+                //   maskValue: 重なったところは maxValue の大きいほうが勝つように、max(maxValue × 内側度) / coverage
+                //              （フェードの途中で別のマスクに入っても値が飛ばない）
+                // 最終値は lerp(Receiver の値, maskValue, coverage)
+                var coverage = 0.0f;
+                var weighted = 0.0f;
+                for (var i = 0; i < _maskShapes.Length; i++)
+                {
+                    var inside = Insideness(_maskShapes[i].SignedDistance(p), _maskFades[i]);
+                    if (inside <= 0.0f)
+                    {
+                        continue;
+                    }
+                    coverage = Mathf.Max(coverage, inside);
+                    weighted = Mathf.Max(weighted, _maskMaxValues[i] * inside);
+                }
+
+                if (coverage <= 0.0f)
+                {
+                    return baseValue;
+                }
+                return Mathf.Lerp(baseValue, weighted / coverage, coverage);
+            }
+
+            /// <summary>範囲の内側度。境界で 0、境界からフェード幅以上内側で 1。フェード幅 0 なら内外で 0/1</summary>
+            private static float Insideness(float signedDistance, float fadeWidth)
+            {
+                return fadeWidth > 0.0f
+                    ? Mathf.Clamp01(-signedDistance / fadeWidth)
+                    : (signedDistance <= 0.0f ? 1.0f : 0.0f);
+            }
+        }
+
+        /// <summary>
+        /// Receiver / TsunTsunMask の範囲（ギズモと同じ解釈）までの符号付き距離。内側が負。
+        /// </summary>
+        private readonly struct Shape
         {
             private readonly Matrix4x4 _worldToShape;
             private readonly ContactBase.ShapeType _type;
@@ -592,20 +684,20 @@ namespace Sigmal00.TsunTsunShader.Editor
             private readonly float _halfLine;
             private readonly Vector3 _halfSize;
 
-            public ReceiverShape(TsunTsunReceiver receiver)
+            public Shape(Transform root, ContactBase.ShapeType shapeType, float radius, float height,
+                Vector3 size, Vector3 position, Vector3 rotation)
             {
-                var root = receiver.rootTransform != null ? receiver.rootTransform : receiver.transform;
-                var center = root.TransformPoint(receiver.position);
-                var rotation = root.rotation * Quaternion.Euler(receiver.rotation);
+                var center = root.TransformPoint(position);
+                var rot = root.rotation * Quaternion.Euler(rotation);
                 var lossy = root.lossyScale;
                 var absLossy = new Vector3(Mathf.Abs(lossy.x), Mathf.Abs(lossy.y), Mathf.Abs(lossy.z));
                 var scale = Mathf.Max(absLossy.x, absLossy.y, absLossy.z);
 
-                _worldToShape = Matrix4x4.TRS(center, rotation, Vector3.one).inverse;
-                _type = receiver.shapeType;
-                _radius = receiver.radius * scale;
-                _halfLine = Mathf.Max(receiver.height * scale * 0.5f - _radius, 0.0f);
-                _halfSize = Vector3.Scale(receiver.size, absLossy) * 0.5f;
+                _worldToShape = Matrix4x4.TRS(center, rot, Vector3.one).inverse;
+                _type = shapeType;
+                _radius = radius * scale;
+                _halfLine = Mathf.Max(height * scale * 0.5f - _radius, 0.0f);
+                _halfSize = Vector3.Scale(size, absLossy) * 0.5f;
             }
 
             public float SignedDistance(Vector3 worldPosition)

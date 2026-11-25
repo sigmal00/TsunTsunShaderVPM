@@ -25,6 +25,7 @@ namespace Sigmal00.TsunTsunShader.Editor
         private SerializedProperty _maskOutputFolder;
         private SerializedProperty _maskResolution;
         private SerializedProperty _maskFadeWidth;
+        private SerializedProperty _maskMaxValue;
         private SerializedProperty _maskExcludeHands;
 
         private const string ReadmeUrl = "https://github.com/sigmal00/TsunTsunShaderVPM#readme";
@@ -36,6 +37,7 @@ namespace Sigmal00.TsunTsunShader.Editor
         private static readonly GUIContent MaskOutputFolderLabel = new GUIContent("保存先", "生成したマスクの保存先フォルダ（Assets/ 以下）。空ならマテリアルと同じフォルダに保存します。");
         private static readonly GUIContent MaskResolutionLabel = new GUIContent("解像度", "生成するマスクの解像度");
         private static readonly GUIContent MaskFadeWidthLabel = new GUIContent("フェード幅 (m)", "範囲の端でマスクを白から黒へフェードさせる幅");
+        private static readonly GUIContent MaskMaxValueLabel = new GUIContent("マスク最大値", "範囲の内側でのマスクの強さ（0 で凹まない、1 で最大まで凹む）");
         private static readonly GUIContent MaskExcludeHandsLabel = new GUIContent("手を除外", "手・指のボーンにウェイトが乗っている部分をマスクから除外します");
 
         private void OnEnable()
@@ -54,6 +56,7 @@ namespace Sigmal00.TsunTsunShader.Editor
             _maskOutputFolder = serializedObject.FindProperty(nameof(TsunTsunReceiver.maskOutputFolder));
             _maskResolution   = serializedObject.FindProperty(nameof(TsunTsunReceiver.maskResolution));
             _maskFadeWidth    = serializedObject.FindProperty(nameof(TsunTsunReceiver.maskFadeWidth));
+            _maskMaxValue     = serializedObject.FindProperty(nameof(TsunTsunReceiver.maskMaxValue));
             _maskExcludeHands = serializedObject.FindProperty(nameof(TsunTsunReceiver.maskExcludeHands));
         }
 
@@ -142,7 +145,15 @@ namespace Sigmal00.TsunTsunShader.Editor
                 {
                     _maskFadeWidth.floatValue = 0.0f;
                 }
+                EditorGUILayout.PropertyField(_maskMaxValue, MaskMaxValueLabel);
                 EditorGUILayout.PropertyField(_maskExcludeHands, MaskExcludeHandsLabel);
+
+                // マスク生成で使われる TsunTsunMask の数
+                if (!serializedObject.isEditingMultipleObjects)
+                {
+                    var masks = TsunTsunMaskGenerator.CollectMasks((TsunTsunReceiver)target);
+                    EditorGUILayout.LabelField("TsunTsun Mask", masks.Length > 0 ? $"{masks.Length} 個（アバター内）" : "なし");
+                }
             }
             serializedObject.ApplyModifiedProperties();
 
