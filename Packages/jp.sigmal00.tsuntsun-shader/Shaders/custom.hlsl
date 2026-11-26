@@ -6,6 +6,7 @@
     float4 _OcclusionColor; \
     float _EffectiveRadius; \
     float _EffectiveDepth; \
+    float _TsunTsunBias; \
     float _FingerLengthScale; \
     float _FingerIndexLength; \
     float _FingerMiddleLength; \

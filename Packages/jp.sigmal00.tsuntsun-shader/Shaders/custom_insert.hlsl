@@ -88,8 +88,11 @@ DepthOutput CalcDepth(float3 p, float3 n, float3 contactPos, float mask)
     const float3 gradW = (6*u*u - 6*u) * gradU;
     const float3 g = (maxDepth*gradW + w*gradDepth) * mask;   // ∇(w·depth·mask)
     
+    // メッシュが重なっているときに内側のメッシュがはみ出ないようにするためのバイアス値、シェーダー全体で固定したい
+    const float bias = lerp(0.0, _TsunTsunBias, saturate(depth/depthCap));
+
     o.n = normalize(n + g - dot(g, n) * n);
-    o.p = p - depth*n;
+    o.p = p - (depth - bias)*n;
     o.depth = depth;
     return o;
 }

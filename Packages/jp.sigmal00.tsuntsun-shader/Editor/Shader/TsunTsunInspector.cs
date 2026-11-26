@@ -29,6 +29,10 @@ namespace Sigmal00.TsunTsunShader.Editor
         /// </summary>
         private MaterialProperty _tsunTsunMask;
         /// <summary>
+        /// <see cref="MaterialProperty"> of "_TsunTsunBias".
+        /// </summary>
+        private MaterialProperty _tsunTsunBias;
+        /// <summary>
         /// <see cref="MaterialProperty"> of "_FingerLengthScale".
         /// </summary>
         private MaterialProperty _fingerLengthScale;
@@ -88,6 +92,7 @@ namespace Sigmal00.TsunTsunShader.Editor
             propertyList.Add(_effectiveRadius = FindProperty("_EffectiveRadius", props));
             propertyList.Add(_effectiveDepth = FindProperty("_EffectiveDepth", props));
             propertyList.Add(_tsunTsunMask = FindProperty("_TsunTsunMask", props));
+            propertyList.Add(_tsunTsunBias = FindProperty("_TsunTsunBias", props));
             propertyList.Add(_fingerLengthScale = FindProperty("_FingerLengthScale", props));
             propertyList.Add(_fingerIndexLength = FindProperty("_FingerIndexLength", props));
             propertyList.Add(_fingerMiddleLength = FindProperty("_FingerMiddleLength", props));
@@ -136,6 +141,12 @@ namespace Sigmal00.TsunTsunShader.Editor
                     lilEditorGUI.LocalizedProperty(m_MaterialEditor, _effectiveRadius);
                     lilEditorGUI.LocalizedProperty(m_MaterialEditor, _effectiveDepth);
                     lilEditorGUI.TexturePropertySingleLine(m_MaterialEditor, tsunTsunMaskLabel, _tsunTsunMask);
+                    EditorGUILayout.Space();
+
+                    lilEditorGUI.LocalizedProperty(m_MaterialEditor, _tsunTsunBias);
+                    EditorGUILayout.HelpBox(GetLoc("sTsunTsunBiasHelp"), MessageType.Info);
+                    EditorGUILayout.Space();
+
                     lilEditorGUI.LocalizedProperty(m_MaterialEditor, _fingerLengthScale);
                     lilEditorGUI.LocalizedProperty(m_MaterialEditor, _fingerIndexLength);
                     lilEditorGUI.LocalizedProperty(m_MaterialEditor, _fingerMiddleLength);

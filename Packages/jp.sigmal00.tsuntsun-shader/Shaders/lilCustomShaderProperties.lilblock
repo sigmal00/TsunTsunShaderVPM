@@ -4,6 +4,7 @@
         _EffectiveRadius ("sEffectiveRadius", Float) = 0.02
         _EffectiveDepth ("sEffectiveDepth", Float) = 0.01
         _TsunTsunMask ("sTsunTsunMask", 2D) = "white" {}
+        _TsunTsunBias ("sTsunTsunBias", Float) = 0.003
         _FingerLengthScale ("sFingerLengthScale", Range(0, 2)) = 1
         _FingerIndexLength ("sFingerIndexLength", Range(0, 0.1)) = 0.025
         _FingerMiddleLength ("sFingerMiddleLength", Range(0, 0.1)) = 0.025
